@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Student table</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</head>
+<body>
+	<h1 style="text-align: center;">Sneakers</h1>
+	<section id="register-section">
+		<form id="save-student-form" style="padding: 10px;">
+			<div class="mb-3">
+			    <label for="input-code" class="form-label">Code:</label>
+			    <input type="text" class="form-control" id="input-code">
+		   </div>
+		   <div class="mb-3">
+			    <label for="input-name" class="form-label">Name:</label>
+			    <input type="text" class="form-control" id="input-name" >
+		   </div>
+		   <div class="mb-3">
+			    <label for="input-degree" class="form-label">Degree:</label>
+			    <input type="text" class="form-control" id="input-degree" >
+		   </div>
+			<div class="mb-3">
+			    <label for="input-email" class="form-label">Email address</label>
+			    <input type="email" class="form-control" id="input-email" aria-describedby="emailHelp">		  
+			</div>
+			<div class="mb-3">
+			    <label for="input-score" class="form-label">Score:</label>
+			    <input type="number" class="form-control" id="input-score">
+		   </div>
+
+		   <button type="submit" onclick="saveStudent()" class="btn btn-success">Save student</button>
+		</form>
+	</section>
+	<table class="table table-dark" id="studentsTable">
+		<thead class="thead-dark">
+			<tr>
+				<th scope="col">id</th>
+				<th scope="col">code</th>
+				<th scope="col">name</th>
+				<th scope="col">email</th>
+				<th scope="col">degree</th>
+				<th scope="col">score</th>
+				<th scope="col">options</th>
+			</tr>
+		</thead>
+		<tbody>
+			
+		</tbody>
+	</table>
+
+	<script type="text/javascript">
+
+		var isEditing = false;
+		
+		//call URL API 
+		const urlAPI = "http://localhost:8080/students";
+		
+		async function fillTable() {
+		    try {
+		        const response = await fetch(urlAPI);
+		        if (!response.ok) {
+		            throw new Error('Network response was not ok');
+		        }
+
+		        const students = await response.json();
+		        const tableBody = document.querySelector('#studentsTable tbody');
+
+		        // Clear existing rows
+		        tableBody.innerHTML = '';
+
+		        // Populate the table
+		        students.forEach(student => {
+
+		            const row = document.createElement('tr');
+		            const idCell = document.createElement('td');
+		            const codeCell = document.createElement('td');
+		            const nameCell = document.createElement('td');
+		            const emailCell = document.createElement('td');
+		            const degreeCell = document.createElement('td');
+		            const scoreCell = document.createElement('td');
+		            const buttonCell = document.createElement('td');
+		            const deleteButton = document.createElement('button');
+		            const editButton = document.createElement('button');
+		            
+		            idCell.textContent = student.id;
+		            idCell.id = "id" + student.code; //id10
+		            codeCell.textContent = student.code;
+		            codeCell.id = "code"+student.code; // code10x
+		            nameCell.textContent = student.name;
+		            nameCell.id = "name" + student.code;
+		            emailCell.textContent = student.email;
+		            emailCell.id = "email" + student.code;
+		            degreeCell.textContent = student.degree;
+		            degreeCell.id = "degree" + student.code;
+		            scoreCell.textContent = student.score;
+		            scoreCell.id = "score" + student.code;
+		            row.id = "row" + student.code;
+		            
+		            editButton.id = "editButton" + student.code;
+
+		            deleteButton.textContent = "delete";
+		            deleteButton.className = "btn btn-danger";
+		            editButton.textContent = "edit";
+		            editButton.className = "btn btn-warning";
+
+
+		           
+		            buttonCell.appendChild(deleteButton);
+		            buttonCell.appendChild(editButton);
+		            row.appendChild(idCell);
+		            row.appendChild(codeCell);
+		            row.appendChild(nameCell);
+		            row.appendChild(emailCell);
+		            row.appendChild(degreeCell);
+		            row.appendChild(scoreCell);
+		            row.appendChild(buttonCell);
+
+		            tableBody.appendChild(row);
+			
+					deleteButton.addEventListener("click", function() {
+					   deleteStudent(student.code);
+					}, false);
+
+
+					editButton.addEventListener("click", function() {
+					   updateStudent(student.code);
+					}, false);
+
+		            
+		        });
+		    } catch (error) {
+		        console.error('There was a problem with the fetch operation:', error);
+		    }
+		}
+
+	// Call the function to fill the table when the page loads
+	window.onload = fillTable;
+
+	function updateStudent(studentCode) {
+
+		//ver si es el código correcto
+		editRow = document.getElementById("row" + studentCode);
+
+		const idCell = document.getElementById("id" + studentCode);
+		const codeCell = document.getElementById("code" + studentCode);
+		const nameCell = document.getElementById("name" + studentCode);
+		const emailCell = document.getElementById("email" + studentCode);
+		const degreeCell = document.getElementById("degree" + studentCode);
+		const scoreCell = document.getElementById("score" + studentCode);
+		const editButton = document.getElementById("editButton" + studentCode);
+
+		if (editButton.textContent === "Save") {
+
+			isEditing = false;
+			saveStudentUpdated(idCell.innerHTML, studentCode, codeCell.innerHTML, nameCell.innerHTML, emailCell.innerHTML, degreeCell.innerHTML, scoreCell.innerHTML);
+		}else{
+
+			if (!isEditing) {
+				isEditing = true;
+				editRow.className = "table table-striped";
+				codeCell.setAttribute('contenteditable', true);
+				nameCell.setAttribute('contenteditable', true);
+				emailCell.setAttribute('contenteditable', true);
+				degreeCell.setAttribute('contenteditable', true);
+				scoreCell.setAttribute('contenteditable', true);
+
+
+				editButton.textContent = "Save";
+				editButton.className = "btn btn-primary";
+				codeCell.focus();
+			}else{
+				console.log("Editando en curso")
+			}
+		}
+	}
+
+	async function saveStudentUpdated(studentId,previousCode,updatedCode, updatedName, updatedEmail, updatedDegree, updatedScore){
+
+
+		const student = {
+			id : studentId,
+			code : updatedCode,
+			name : updatedName,
+			degree : updatedDegree,
+			email : updatedEmail,
+			score : updatedScore
+		}
+
+		const baseURL = "http://localhost:8080/students";
+		const response = await fetch(`${baseURL}/updateStudentByCode=${previousCode}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json; charset=utf-8'
+			},
+			body: JSON.stringify(student)
+		});
+
+		if (!response.ok) {
+			throw new Error('Network response was not ok');
+		}
+
+		await fillTable(); // Re-fetch and refresh the table
+
+
+	}
+
+	async function deleteStudent(studentCode) {
+    try {
+    	const baseURL = "http://localhost:8080/students";
+        const response = await fetch(`${baseURL}/deleteStudentByCode=${studentCode}`, {
+            method: 'DELETE',
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        // Optionally, you can handle the response from the server here
+        console.log(`Student with CODE ${studentCode} deleted successfully`);
+
+        // Optionally, you might want to refresh the table or remove the row
+        fillTable(); // Re-fetch and refresh the table
+    } catch (error) {
+        console.error('There was a problem with the delete operation:', error);
+    }
+}
+	
+    async function saveStudent(){
+
+		const inputCode = document.getElementById("input-code").value;
+		const inputName = document.getElementById("input-name").value;
+		const inputDegree = document.getElementById("input-degree").value;
+		const inputEmail = document.getElementById("input-email").value;
+		const inputScore = document.getElementById("input-score").value;
+
+
+		var filter = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+       
+
+        if (!filter.test(inputEmail)) {
+            alert('Please provide a valid email address');
+            email.focus;
+        }else{
+    		const student = {
+			  code : inputCode,
+			  name : inputName,
+			  degree : inputDegree,
+			  email : inputEmail,
+			  score : inputScore
+			}
+
+			// a POST request
+			const response = await fetch(urlAPI, {
+			  method: 'POST',
+			  headers: {
+			    'Content-Type': 'application/json; charset=utf-8'
+			  },
+			  body: JSON.stringify(student)
+			})
+
+
+			if(response.ok){
+				//clear the form
+	 			document.querySelector("#save-student-form").reset();
+
+				fillTable();
+			}else{
+				console.log('status:', response.status)
+			}
+
+        }
+		
+	}
+	</script>
+</body>
+</html>
